@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import demoUsers from "@/lib/demoUsers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +10,58 @@ import { TrendingUp } from "lucide-react";
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("trader");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email) {
+      setError("Please enter your email.");
+      return;
+    }
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Simulate network latency
+      await new Promise((res) => setTimeout(res, 400));
+
+      if (isLogin) {
+        // Check against hardcoded dev users
+        const found = demoUsers.find(
+          (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password,
+        );
+
+        if (!found) {
+          throw new Error("Invalid credentials. Contact admin to create an account.");
+        }
+
+        localStorage.setItem("af_token", "demo-token");
+        localStorage.setItem("af_role", found.role);
+        localStorage.setItem("af_user", found.id);
+        navigate("/dashboard");
+      } else {
+        // Registration disabled in this demo. Admin must create accounts.
+        throw new Error(
+          "Registration is disabled. Contact admin to create an account.",
+        );
+      }
+    } catch (err: any) {
+      setError(err?.message ?? "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4">
@@ -28,63 +82,82 @@ const Login = () => {
             {isLogin ? "Welcome Back" : "Create Account"}
           </CardTitle>
           <CardDescription>
-            {isLogin 
+            {isLogin
               ? "Enter your credentials to access your dashboard"
               : "Sign up to start trading with powerful algorithms"
             }
           </CardDescription>
         </CardHeader>
+
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input 
-              id="email" 
-              type="email" 
-              placeholder="trader@example.com"
-              className="bg-background/50"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input 
-              id="password" 
-              type="password"
-              className="bg-background/50"
-            />
-          </div>
-
-          {!isLogin && (
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select defaultValue="trader">
-                <SelectTrigger className="bg-background/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="trader">Trader</SelectItem>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="trader@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-background/50"
+                required
+              />
             </div>
-          )}
 
-          <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity">
-            {isLogin ? "Sign In" : "Create Account"}
-          </Button>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-background/50"
+                required
+              />
+            </div>
 
-          <div className="text-center text-sm">
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline"
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select defaultValue={role} onValueChange={(v) => setRole(v)}>
+                  <SelectTrigger className="bg-background/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="trader">Trader</SelectItem>
+                    <SelectItem value="viewer">Viewer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {error && (
+              <div className="text-sm text-destructive">{error}</div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+              disabled={loading}
             >
-              {isLogin 
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"
-              }
-            </button>
-          </div>
+              {loading ? (isLogin ? "Signing in..." : "Creating...") : (isLogin ? "Sign In" : "Create Account")}
+            </Button>
+
+            <div className="text-center text-sm">
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-primary hover:underline"
+              >
+                {isLogin
+                  ? "Don't have an account? Sign up"
+                  : "Already have an account? Sign in"
+                }
+              </button>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
