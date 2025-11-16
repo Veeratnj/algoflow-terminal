@@ -3,7 +3,15 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import LiveTrades from "./pages/LiveTrades";
+import OrderHistory from "./pages/OrderHistory";
+import Strategies from "./pages/Strategies";
+import Analytics from "./pages/Analytics";
+import Logs from "./pages/Logs";
+import Users from "./pages/Users";
+import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,7 +23,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/trades" element={<LiveTrades />} />
+          <Route path="/history" element={<OrderHistory />} />
+          <Route path="/strategies" element={<Strategies />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/logs" element={<Logs />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
