@@ -1,9 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Global Theme Variables - Centralized Theme Management */
-/* Modify the custom properties below to change the entire application theme */
+/* Elite Pure Dark Theme with Golden Accents */
+/* All theme colors are defined here - change these values to update the entire application */
 
 @layer base {
   :root {
@@ -31,7 +27,7 @@
     --error: 0 72% 60%;           /* Red */
     --warning: 38 92% 50%;        /* Orange */
     
-    /* Standard CSS Variables - derived from theme colors */
+    /* Standard CSS Variables */
     --background: var(--bg-primary);
     --foreground: var(--text-primary);
     --card: var(--bg-secondary);
@@ -64,10 +60,6 @@
     --sidebar-accent-foreground: var(--accent-primary);
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: var(--accent-primary);
-
-    /* Trading specific colors */
-    --profit: 142 76% 56%;
-    --loss: 0 72% 60%;
 
     /* Glass morphism with golden tint */
     --glass-bg: 0 0% 8% / 0.6;
