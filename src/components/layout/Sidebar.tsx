@@ -130,11 +130,11 @@ const SidebarContent = ({
   return (
     <>
       <div className="p-6 border-b border-sidebar-border flex items-center gap-2">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent drop-shadow-lg">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           AlgoTrader
         </h1>
       </div>
-      
+
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {items.map((item) => (
           <NavLink
@@ -142,15 +142,15 @@ const SidebarContent = ({
             to={item.url}
             end={item.url === "/dashboard"}
             onClick={onNavigate}
-            className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-amber-500/10 hover:text-amber-300 transition-all duration-200`}
-            activeClassName="bg-amber-500/20 text-amber-300 font-medium border-l-2 border-amber-400"
+            className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200`}
+            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
           >
-            <item.icon className={`${collapsed ? "h-10 w-10" : "h-5 w-5"}`} />
+            {<item.icon className={`${collapsed ? "h-10 w-10" : "h-5 w-5"}`} />}
             <span className={`${collapsed ? "sr-only" : ""}`}>{item.title}</span>
           </NavLink>
         ))}
       </nav>
-      
+
       <div className="flex-none p-4 border-t border-sidebar-border">
         {/* Collapse toggle placed above user info */}
         {!collapsed && (
@@ -166,7 +166,7 @@ const SidebarContent = ({
         )}
 
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className={`${collapsed ? "h-16 w-16 mx-auto" : "h-10 w-10"} rounded-full bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500 flex items-center justify-center text-black font-bold shadow-lg shadow-amber-500/30`}> 
+          <div className={`${collapsed ? "h-16 w-16 mx-auto" : "h-10 w-10"} rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold`}>
             <span className={`${collapsed ? "text-xl" : ""}`}>U</span>
           </div>
           {!collapsed && (
