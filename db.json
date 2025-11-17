@@ -285,37 +285,34 @@
       "id": 1,
       "date": "2025-01-17",
       "totalTrades": 15,
-      "winningTrades": 11,
-      "losingTrades": 4,
+      "winCount": 11,
+      "lossCount": 4,
       "winRate": 73.3,
-      "totalPnl": 2082,
-      "averageWin": 189.27,
-      "averageLoss": 120.5,
-      "profitFactor": 1.57
+      "avgWin": 189.27,
+      "avgLoss": 120.5,
+      "maxDrawdown": 12.5
     },
     {
       "id": 2,
       "date": "2025-01-16",
       "totalTrades": 12,
-      "winningTrades": 9,
-      "losingTrades": 3,
+      "winCount": 9,
+      "lossCount": 3,
       "winRate": 75,
-      "totalPnl": 1850,
-      "averageWin": 205.56,
-      "averageLoss": 115,
-      "profitFactor": 1.78
+      "avgWin": 205.56,
+      "avgLoss": 115,
+      "maxDrawdown": 10.2
     },
     {
       "id": 3,
       "date": "2025-01-15",
       "totalTrades": 10,
-      "winningTrades": 7,
-      "losingTrades": 3,
+      "winCount": 7,
+      "lossCount": 3,
       "winRate": 70,
-      "totalPnl": 1320,
-      "averageWin": 188.57,
-      "averageLoss": 125,
-      "profitFactor": 1.51
+      "avgWin": 188.57,
+      "avgLoss": 125,
+      "maxDrawdown": 14.8
     }
   ]
 }

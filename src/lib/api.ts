@@ -4,6 +4,7 @@ import axios, {
   AxiosResponse,
   AxiosError,
 } from "axios";
+import { config } from "@/config/environment";
 
 /**
  * API Response Wrapper
@@ -28,8 +29,8 @@ export interface ApiErrorResponse {
 /**
  * API Client Configuration
  */
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
-const API_TIMEOUT = 10000; // 10 seconds
+const API_BASE_URL = config.api.baseURL;
+const API_TIMEOUT = config.api.timeout;
 
 /**
  * Create Axios Instance with default configuration
