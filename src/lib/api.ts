@@ -8,7 +8,7 @@ import { config } from "@/config/environment";
 
 /**
  * API Response Wrapper
- * Standardized response format for all API calls
+ * Standardized response format matching FastAPI backend
  */
 export interface ApiResponse<T = any> {
   data: T;
@@ -28,6 +28,7 @@ export interface ApiErrorResponse {
 
 /**
  * API Client Configuration
+ * Base URL comes from .env file (VITE_API_URL)
  */
 const API_BASE_URL = config.api.baseURL;
 const API_TIMEOUT = config.api.timeout;
@@ -63,10 +64,12 @@ axiosInstance.interceptors.request.use(
 
 /**
  * Response Interceptor
- * Handle errors globally
+ * Handle errors globally and unwrap FastAPI response format
  */
 axiosInstance.interceptors.response.use(
   (response) => {
+    // FastAPI returns { status, data, message }
+    // Return the entire response for consistency
     return response;
   },
   (error: AxiosError) => {
@@ -96,8 +99,9 @@ export const apiClient = {
     config?: AxiosRequestConfig
   ): Promise<T> => {
     try {
-      const response: AxiosResponse<T> = await axiosInstance.get(url, config);
-      return response.data;
+      const response: AxiosResponse<any> = await axiosInstance.get(url, config);
+      // Handle both response formats: direct data or wrapped in { data: ... }
+      return response.data?.data !== undefined ? response.data.data : response.data;
     } catch (error) {
       throw handleError(error);
     }
@@ -116,12 +120,14 @@ export const apiClient = {
     config?: AxiosRequestConfig
   ): Promise<T> => {
     try {
-      const response: AxiosResponse<T> = await axiosInstance.post(
+      const response: AxiosResponse<any> = await axiosInstance.post(
         url,
         data,
         config
       );
-      return response.data;
+      
+      // Handle both response formats: direct data or wrapped in { data: ... }
+      return response.data?.data !== undefined ? response.data.data : response.data;
     } catch (error) {
       throw handleError(error);
     }
@@ -140,12 +146,13 @@ export const apiClient = {
     config?: AxiosRequestConfig
   ): Promise<T> => {
     try {
-      const response: AxiosResponse<T> = await axiosInstance.put(
+      const response: AxiosResponse<any> = await axiosInstance.put(
         url,
         data,
         config
       );
-      return response.data;
+      // Handle both response formats: direct data or wrapped in { data: ... }
+      return response.data?.data !== undefined ? response.data.data : response.data;
     } catch (error) {
       throw handleError(error);
     }
@@ -164,12 +171,13 @@ export const apiClient = {
     config?: AxiosRequestConfig
   ): Promise<T> => {
     try {
-      const response: AxiosResponse<T> = await axiosInstance.patch(
+      const response: AxiosResponse<any> = await axiosInstance.patch(
         url,
         data,
         config
       );
-      return response.data;
+      // Handle both response formats: direct data or wrapped in { data: ... }
+      return response.data?.data !== undefined ? response.data.data : response.data;
     } catch (error) {
       throw handleError(error);
     }
@@ -186,11 +194,14 @@ export const apiClient = {
     config?: AxiosRequestConfig
   ): Promise<T> => {
     try {
-      const response: AxiosResponse<T> = await axiosInstance.delete(
+      const response: AxiosResponse<any> = await axiosInstance.delete(
         url,
         config
       );
-      return response.data;
+      // Handle both response formats: direct data or wrapped in { data: ... }
+      // Also handle 204 No Content responses
+      if (!response.data) return null as T;
+      return response.data?.data !== undefined ? response.data.data : response.data;
     } catch (error) {
       throw handleError(error);
     }
@@ -206,7 +217,9 @@ const handleError = (error: any): ApiErrorResponse => {
     const status = error.response?.status || 500;
     const message = error.response?.data?.message || error.message;
 
-    console.error(`API Error [${status}]:`, message);
+    if (config.features.enableLogs) {
+      console.error(`API Error [${status}]:`, message);
+    }
 
     return {
       status,
@@ -215,7 +228,10 @@ const handleError = (error: any): ApiErrorResponse => {
     };
   }
 
-  console.error("Unexpected error:", error);
+  if (config.features.enableLogs) {
+    console.error("Unexpected error:", error);
+  }
+  
   return {
     status: 500,
     message: "An unexpected error occurred",
@@ -224,76 +240,113 @@ const handleError = (error: any): ApiErrorResponse => {
 };
 
 /**
- * Specific API Endpoints Module
- * Higher-level functions for specific resources
+ * ============================================================================
+ * FastAPI Endpoint Modules
+ * Based on api_endpoints.json
+ * ============================================================================
  */
 
-// Market Data
-export const marketApi = {
-  getIndices: () => apiClient.get("/marketIndices"),
-  getPnl: () => apiClient.get("/pnl"),
-};
-
-// Trades
-export const tradesApi = {
-  getAll: () => apiClient.get("/trades"),
-  getById: (id: string | number) => apiClient.get(`/trades/${id}`),
-  create: (data: any) => apiClient.post("/trades", data),
-  update: (id: string | number, data: any) =>
-    apiClient.put(`/trades/${id}`, data),
-  delete: (id: string | number) => apiClient.delete(`/trades/${id}`),
-};
-
-// Orders
-export const ordersApi = {
-  getAll: () => apiClient.get("/orderHistory"),
-  getById: (id: string) => apiClient.get(`/orderHistory/${id}`),
-  create: (data: any) => apiClient.post("/orderHistory", data),
-  update: (id: string, data: any) =>
-    apiClient.put(`/orderHistory/${id}`, data),
-  cancel: (id: string) => apiClient.patch(`/orderHistory/${id}`, { status: "CANCELLED" }),
-};
-
-// Strategies
-export const strategiesApi = {
-  getAll: () => apiClient.get("/strategies"),
-  getById: (id: string | number) =>
-    apiClient.get(`/strategies/${id}`),
-  create: (data: any) => apiClient.post("/strategies", data),
-  update: (id: string | number, data: any) =>
-    apiClient.put(`/strategies/${id}`, data),
-  delete: (id: string | number) =>
-    apiClient.delete(`/strategies/${id}`),
+// Authentication
+export const authApi = {
+  login: (email: string, password: string) =>
+    apiClient.post("/api/auth/login", { email, password }),
+  register: (data: { email: string; password: string; name: string; role?: string }) =>
+    apiClient.post("/api/auth/register", data),
+  refresh: () => apiClient.post("/api/auth/refresh"),
 };
 
 // Users
 export const usersApi = {
-  getAll: () => apiClient.get("/users"),
-  getById: (id: string) => apiClient.get(`/users/${id}`),
-  create: (data: any) => apiClient.post("/users", data),
-  update: (id: string, data: any) =>
-    apiClient.put(`/users/${id}`, data),
-  delete: (id: string) => apiClient.delete(`/users/${id}`),
-  login: (email: string, password: string) =>
-    apiClient.post("/users/login", { email, password }),
+  me: () => apiClient.get("/api/users/me"),
+  updateMe: (data: { name?: string; email?: string }) =>
+    apiClient.put("/api/users/me", data),
+  getAll: () => apiClient.get("/api/users"),
+  getById: (id: string | number) => apiClient.get(`/api/users/${id}`),
+  delete: (id: string | number) => apiClient.delete(`/api/users/${id}`),
+  activate: (id: string | number) => apiClient.post(`/api/users/${id}/activate`),
+  deactivate: (id: string | number) => apiClient.post(`/api/users/${id}/deactivate`),
 };
 
-// Logs
-export const logsApi = {
-  getAll: () => apiClient.get("/logs"),
-  getById: (id: string | number) => apiClient.get(`/logs/${id}`),
+// Market Data
+export const marketApi = {
+  getIndices: () => apiClient.get("/api/market/indices"),
+  getIndexByName: (name: string) => apiClient.get(`/api/market/indices/${name}`),
+  createIndex: (data: any) => apiClient.post("/api/market/indices", data),
+  updateIndex: (id: string | number, data: any) =>
+    apiClient.put(`/api/market/indices/${id}`, data),
+  deleteIndex: (id: string | number) => apiClient.delete(`/api/market/indices/${id}`),
+  getPnl: () => apiClient.get("/api/market/pnl"),
+  getPnlByPeriod: (period: "today" | "week" | "month") =>
+    apiClient.get(`/api/market/pnl/${period}`),
+  createPnl: (data: any) => apiClient.post("/api/market/pnl", data),
 };
 
-// Alerts
-export const alertsApi = {
-  getAll: () => apiClient.get("/alerts"),
-  getById: (id: string | number) => apiClient.get(`/alerts/${id}`),
+// Trades
+export const tradesApi = {
+  getAll: () => apiClient.get("/api/trades"),
+  getById: (id: string | number) => apiClient.get(`/api/trades/${id}`),
+  create: (data: any) => apiClient.post("/api/trades", data),
+  update: (id: string | number, data: any) => apiClient.put(`/api/trades/${id}`, data),
+  delete: (id: string | number) => apiClient.delete(`/api/trades/${id}`),
+  getActive: () => apiClient.get("/api/trades/active/all"),
+  close: (id: string | number, closingPrice: number) =>
+    apiClient.post(`/api/trades/${id}/close?closing_price=${closingPrice}`),
+};
+
+// Orders
+export const ordersApi = {
+  getAll: () => apiClient.get("/api/orders"),
+  getById: (id: string) => apiClient.get(`/api/orders/${id}`),
+  create: (data: any) => apiClient.post("/api/orders", data),
+  update: (id: string, data: any) => apiClient.put(`/api/orders/${id}`, data),
+  cancel: (id: string) => apiClient.patch(`/api/orders/${id}/cancel`),
+  delete: (id: string) => apiClient.delete(`/api/orders/${id}`),
+};
+
+// Strategies
+export const strategiesApi = {
+  getAll: () => apiClient.get("/api/strategies"),
+  getById: (id: string | number) => apiClient.get(`/api/strategies/${id}`),
+  create: (data: any) => apiClient.post("/api/strategies", data),
+  update: (id: string | number, data: any) =>
+    apiClient.put(`/api/strategies/${id}`, data),
+  delete: (id: string | number) => apiClient.delete(`/api/strategies/${id}`),
+  getActive: () => apiClient.get("/api/strategies/active/all"),
 };
 
 // Analytics
 export const analyticsApi = {
-  getAll: () => apiClient.get("/analytics"),
-  getByDate: (date: string) => apiClient.get(`/analytics?date=${date}`),
+  getAll: () => apiClient.get("/api/analytics"),
+  getByDate: (date: string) => apiClient.get(`/api/analytics/date/${date}`),
+  create: (data: any) => apiClient.post("/api/analytics", data),
+  getRange: (startDate: string, endDate: string) =>
+    apiClient.get(`/api/analytics/range?start_date=${startDate}&end_date=${endDate}`),
+  getLatest: (days: number = 30) => apiClient.get(`/api/analytics/latest?days=${days}`),
+};
+
+// Alerts
+export const alertsApi = {
+  getAll: (isRead?: boolean) => {
+    const params = isRead !== undefined ? `?is_read=${isRead}` : "";
+    return apiClient.get(`/api/alerts${params}`);
+  },
+  getById: (id: string | number) => apiClient.get(`/api/alerts/${id}`),
+  create: (data: { message: string; alert_type: string }) =>
+    apiClient.post("/api/alerts", data),
+  markAsRead: (id: string | number) => apiClient.patch(`/api/alerts/${id}/read`),
+  delete: (id: string | number) => apiClient.delete(`/api/alerts/${id}`),
+};
+
+// Logs
+export const logsApi = {
+  getAll: (params?: { level?: string; category?: string; limit?: number }) => {
+    const queryString = params
+      ? `?${new URLSearchParams(params as any).toString()}`
+      : "";
+    return apiClient.get(`/api/logs${queryString}`);
+  },
+  getById: (id: string | number) => apiClient.get(`/api/logs/${id}`),
+  create: (data: any) => apiClient.post("/api/logs", data),
 };
 
 export default apiClient;

@@ -17,24 +17,24 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const adminNav = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Live Trades", url: "/trades", icon: TrendingUp },
-  { title: "Order History", url: "/history", icon: History },
-  { title: "Strategies", url: "/strategies", icon: Activity },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Logs", url: "/logs", icon: FileText },
-  { title: "Users", url: "/users", icon: Users },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, disabled: true },
+  { title: "Live Trades", url: "/trades", icon: TrendingUp, disabled: false },
+  { title: "Order History", url: "/history", icon: History, disabled: false },
+  { title: "Strategies", url: "/strategies", icon: Activity, disabled: true },
+  { title: "Analytics", url: "/analytics", icon: BarChart3, disabled: true },
+  { title: "Logs", url: "/logs", icon: FileText, disabled: true },
+  { title: "Users", url: "/users", icon: Users, disabled: true },
+  { title: "Settings", url: "/settings", icon: Settings, disabled: true },
 ];
 
 // Role `user` (or `trader`) limited nav
 const userNav = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Live Trades", url: "/trades", icon: TrendingUp },
-  { title: "Order History", url: "/history", icon: History },
-  { title: "Strategies", url: "/strategies", icon: Activity },
-  { title: "Analytics", url: "/analytics", icon: BarChart3 },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, disabled: true },
+  { title: "Live Trades", url: "/trades", icon: TrendingUp, disabled: false },
+  { title: "Order History", url: "/history", icon: History, disabled: false },
+  { title: "Strategies", url: "/strategies", icon: Activity, disabled: true },
+  { title: "Analytics", url: "/analytics", icon: BarChart3, disabled: true },
+  { title: "Settings", url: "/settings", icon: Settings, disabled: true },
 ];
 
 interface SidebarProps {
@@ -47,12 +47,18 @@ interface SidebarProps {
 export const Sidebar = ({ collapsed = false, mobile = false, onClose, onToggle }: SidebarProps) => {
   const navigate = useNavigate();
   const [role, setRole] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("User");
+  const [userEmail, setUserEmail] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
     const r = localStorage.getItem("af_role") || null;
+    const name = localStorage.getItem("af_user_name") || "User";
+    const email = localStorage.getItem("af_user_email") || "";
     setRole(r);
+    setUserName(name);
+    setUserEmail(email);
   }, []);
 
   const items = role === "admin" ? adminNav : userNav;
@@ -84,7 +90,9 @@ export const Sidebar = ({ collapsed = false, mobile = false, onClose, onToggle }
             <SidebarContent 
               items={items} 
               collapsed={false} 
-              role={role} 
+              role={role}
+              userName={userName}
+              userEmail={userEmail}
               handleLogout={handleLogout}
               onNavigate={() => setIsOpen(false)}
             />
@@ -103,7 +111,9 @@ export const Sidebar = ({ collapsed = false, mobile = false, onClose, onToggle }
       <SidebarContent 
         items={items} 
         collapsed={collapsed} 
-        role={role} 
+        role={role}
+        userName={userName}
+        userEmail={userEmail}
         handleLogout={handleLogout}
         onToggle={onToggle}
       />
@@ -115,7 +125,9 @@ export const Sidebar = ({ collapsed = false, mobile = false, onClose, onToggle }
 const SidebarContent = ({ 
   items, 
   collapsed, 
-  role, 
+  role,
+  userName,
+  userEmail,
   handleLogout,
   onToggle,
   onNavigate
@@ -123,6 +135,8 @@ const SidebarContent = ({
   items: typeof adminNav;
   collapsed?: boolean;
   role: string | null;
+  userName: string;
+  userEmail: string;
   handleLogout: () => void;
   onToggle?: () => void;
   onNavigate?: () => void;
@@ -131,23 +145,37 @@ const SidebarContent = ({
     <>
       <div className="p-6 border-b border-sidebar-border flex items-center gap-2">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent drop-shadow-lg">
-          AlgoTrader
+          SETC
         </h1>
       </div>
       
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
         {items.map((item) => (
-          <NavLink
-            key={item.url}
-            to={item.url}
-            end={item.url === "/dashboard"}
-            onClick={onNavigate}
-            className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-amber-500/10 hover:text-amber-300 transition-all duration-200`}
-            activeClassName="bg-amber-500/20 text-amber-300 font-medium border-l-2 border-amber-400"
-          >
-            <item.icon className={`${collapsed ? "h-10 w-10" : "h-5 w-5"}`} />
-            <span className={`${collapsed ? "sr-only" : ""}`}>{item.title}</span>
-          </NavLink>
+          item.disabled ? (
+            <div
+              key={item.url}
+              className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} px-4 py-3 rounded-lg text-sidebar-foreground/40 cursor-not-allowed relative group`}
+              title="Coming Soon - Under Development"
+            >
+              <item.icon className={`${collapsed ? "h-10 w-10" : "h-5 w-5"}`} />
+              <span className={`${collapsed ? "sr-only" : ""}`}>{item.title}</span>
+              {!collapsed && (
+                <span className="ml-auto text-xs bg-warning/20 text-warning px-2 py-0.5 rounded">Soon</span>
+              )}
+            </div>
+          ) : (
+            <NavLink
+              key={item.url}
+              to={item.url}
+              end={item.url === "/dashboard"}
+              onClick={onNavigate}
+              className={`flex items-center ${collapsed ? "justify-center" : "gap-3"} px-4 py-3 rounded-lg text-sidebar-foreground hover:bg-amber-500/10 hover:text-amber-300 transition-all duration-200`}
+              activeClassName="bg-amber-500/20 text-amber-300 font-medium border-l-2 border-amber-400"
+            >
+              <item.icon className={`${collapsed ? "h-10 w-10" : "h-5 w-5"}`} />
+              <span className={`${collapsed ? "sr-only" : ""}`}>{item.title}</span>
+            </NavLink>
+          )
         ))}
       </nav>
       
@@ -167,12 +195,12 @@ const SidebarContent = ({
 
         <div className="flex items-center gap-3 px-4 py-3">
           <div className={`${collapsed ? "h-16 w-16 mx-auto" : "h-10 w-10"} rounded-full bg-gradient-to-br from-amber-400 via-yellow-400 to-amber-500 flex items-center justify-center text-black font-bold shadow-lg shadow-amber-500/30`}> 
-            <span className={`${collapsed ? "text-xl" : ""}`}>U</span>
+            <span className={`${collapsed ? "text-xl" : ""}`}>{userName.charAt(0).toUpperCase()}</span>
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">User Name</p>
-              <p className="text-xs text-muted-foreground">{role ?? "guest"}</p>
+              <p className="text-sm font-medium truncate">{userName}</p>
+              <p className="text-xs text-muted-foreground truncate">{userEmail || role || "guest"}</p>
             </div>
           )}
         </div>

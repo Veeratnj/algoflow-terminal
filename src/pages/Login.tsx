@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import demoUsers from "@/lib/demoUsers";
+import { authApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,31 +33,48 @@ const Login = () => {
 
     setLoading(true);
     try {
-      // Simulate network latency
-      await new Promise((res) => setTimeout(res, 400));
-
       if (isLogin) {
-        // Check against hardcoded dev users
-        const found = demoUsers.find(
-          (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password,
-        );
+        // Call FastAPI backend login
+        console.log("Attempting login with:", { email, password: "***" });
+        
+        const response = await authApi.login(email, password);
+        
+        console.log("Login successful:", response);
 
-        if (!found) {
-          throw new Error("Invalid credentials. Contact admin to create an account.");
-        }
-
-        localStorage.setItem("af_token", "demo-token");
-        localStorage.setItem("af_role", found.role);
-        localStorage.setItem("af_user", found.id);
-        navigate("/dashboard");
+        // Store JWT token and user info from FastAPI response
+        localStorage.setItem("af_token", response.access_token);
+        localStorage.setItem("af_role", response.user.role);
+        localStorage.setItem("af_user", response.user.id.toString());
+        localStorage.setItem("af_user_email", response.user.email);
+        localStorage.setItem("af_user_name", response.user.name);
+        
+        navigate("/trades");
       } else {
-        // Registration disabled in this demo. Admin must create accounts.
-        throw new Error(
-          "Registration is disabled. Contact admin to create an account.",
-        );
+        // Call FastAPI backend register
+        console.log("Attempting registration with:", { email, role });
+        
+        const response = await authApi.register({
+          email,
+          password,
+          name: email.split("@")[0], // Use email prefix as default name
+          role,
+        });
+        
+        console.log("Registration successful:", response);
+        
+        // Auto-login after successful registration
+        const loginResponse = await authApi.login(email, password);
+        localStorage.setItem("af_token", loginResponse.access_token);
+        localStorage.setItem("af_role", loginResponse.user.role);
+        localStorage.setItem("af_user", loginResponse.user.id.toString());
+        localStorage.setItem("af_user_email", loginResponse.user.email);
+        localStorage.setItem("af_user_name", loginResponse.user.name);
+        
+        navigate("/trades");
       }
     } catch (err: any) {
-      setError(err?.message ?? "Login failed");
+      console.error("Authentication error:", err);
+      setError(err?.message ?? (isLogin ? "Login failed" : "Registration failed"));
     } finally {
       setLoading(false);
     }
@@ -75,7 +92,7 @@ const Login = () => {
           <div className="flex items-center justify-center gap-2 mb-4">
             <TrendingUp className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              AlgoTrader
+              SETC
             </h1>
           </div>
           <CardTitle className="text-2xl">

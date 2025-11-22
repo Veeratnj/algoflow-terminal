@@ -12,10 +12,10 @@ interface Trade {
   strike: number;
   type: string;
   qty: number;
-  entryPrice: number;
-  currentPrice: number;
+  entry_price: number;
+  current_price: number;
   pnl: number;
-  pnlPercent: number;
+  pnl_percent: number;
   status: string;
   strategy: string;
   timestamp: string;
@@ -44,7 +44,7 @@ const LiveTrades = () => {
   }, []);
 
   const totalPnl = trades.reduce((sum, trade) => sum + trade.pnl, 0);
-  const totalValue = trades.reduce((sum, trade) => sum + (trade.entryPrice * trade.qty), 0);
+  const totalValue = trades.reduce((sum, trade) => sum + (trade.entry_price * trade.qty), 0);
   const totalPnlPercent = totalValue > 0 ? (totalPnl / totalValue) * 100 : 0;
 
   return (
@@ -125,11 +125,11 @@ const LiveTrades = () => {
                     <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border">
                       <div>
                         <p className="text-xs text-muted-foreground">Entry Price</p>
-                        <p className="text-sm font-medium">₹{trade.entryPrice}</p>
+                        <p className="text-sm font-medium">₹{trade.entry_price}</p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Current Price</p>
-                        <p className="text-sm font-medium">₹{trade.currentPrice}</p>
+                        <p className="text-sm font-medium">₹{trade.current_price}</p>
                       </div>
                     </div>
 
@@ -145,17 +145,29 @@ const LiveTrades = () => {
                       </div>
                       <div className="flex items-end justify-between mt-1">
                         <span className={`text-2xl font-bold ${trade.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                          ₹{Math.abs(trade.pnl)}
+                          ₹{Math.abs(trade.pnl).toLocaleString()}
                         </span>
                         <span className={`text-sm font-medium ${trade.pnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                          {trade.pnl >= 0 ? '+' : '-'}{Math.abs(trade.pnlPercent)}%
+                          {(() => {
+                            const calculatedPercent = ((trade.current_price - trade.entry_price) / trade.entry_price) * 100;
+                            return `${calculatedPercent >= 0 ? '+' : ''}${calculatedPercent.toFixed(2)}%`;
+                          })()}
                         </span>
                       </div>
                     </div>
 
                     {/* Timestamp */}
                     <div className="text-xs text-muted-foreground text-right">
-                      Entry: {trade.timestamp}
+                      Entry: {(() => {
+                        const date = new Date(trade.timestamp);
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const year = date.getFullYear();
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        const seconds = String(date.getSeconds()).padStart(2, '0');
+                        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                      })()}
                     </div>
                   </CardContent>
                 </Card>
