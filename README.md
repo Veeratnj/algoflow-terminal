@@ -1,73 +1,231 @@
-# Welcome to your Lovable project
+# AlgoFlow Terminal
 
-## Project info
+A modern algorithmic trading platform built with React, TypeScript, and FastAPI backend integration.
 
-**URL**: https://lovable.dev/projects/5b561659-2726-4804-adf6-2421f0d8105d
+## 🚀 Features
 
-## How can I edit this code?
+- **Real-time Trading Dashboard**: Monitor market indices, P&L, and active trades
+- **Order Management**: Place, track, and manage orders with ease
+- **Strategy Management**: Create and deploy automated trading strategies
+- **Analytics & Reports**: Comprehensive trading performance analytics
+- **User Management**: Role-based access control (Admin/Trader)
+- **Alert System**: Real-time notifications for market events
+- **Trade Logging**: Complete audit trail of all trading activities
 
-There are several ways of editing your application.
+## 🛠️ Tech Stack
 
-**Use Lovable**
+### Frontend
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5b561659-2726-4804-adf6-2421f0d8105d) and start prompting.
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool and dev server
+- **React Router** - Client-side routing
+- **TanStack Query** - Server state management
+- **Axios** - HTTP client
+- **shadcn/ui** - UI component library
+- **Radix UI** - Headless UI primitives
+- **Tailwind CSS** - Utility-first CSS framework
+- **Recharts** - Data visualization
+- **React Hook Form** - Form management
+- **Zod** - Schema validation
 
-Changes made via Lovable will be committed automatically to this repo.
+### Backend Integration
 
-**Use your preferred IDE**
+- **FastAPI** - Python backend framework
+- RESTful API architecture
+- JWT authentication
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 📋 Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Node.js** (v18 or higher) - [Install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **npm** or **yarn** package manager
+- **FastAPI Backend** running on the configured server
 
-Follow these steps:
+## 🔧 Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. **Clone the repository**
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd algoflow-terminal
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Install dependencies**
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+
+   Create a `.env` file in the root directory:
+
+   ```env
+   # API Configuration
+   VITE_API_URL=http://13.204.188.14:8000
+
+   # Application Environment
+   VITE_APP_ENV=development
+   VITE_APP_NAME=AlgoTrader
+   VITE_APP_VERSION=1.0.0
+
+   # API Timeout (in milliseconds)
+   VITE_API_TIMEOUT=15000
+
+   # Feature Flags
+   VITE_ENABLE_LOGS=true
+   VITE_ENABLE_ANALYTICS=false
+   ```
+
+   For production, update `.env.production` accordingly.
+
+4. **Start the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+   The application will be available at `http://localhost:8080`
+
+## 📝 Available Scripts
+
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run build:dev` - Build with development configuration
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint for code quality checks
+
+## 🏗️ Project Structure
+
+```
+algoflow-terminal/
+├── src/
+│   ├── components/      # Reusable UI components
+│   ├── pages/          # Page components
+│   ├── lib/            # Utility functions and API client
+│   ├── config/         # Configuration files
+│   ├── hooks/          # Custom React hooks
+│   └── types/          # TypeScript type definitions
+├── public/             # Static assets
+├── .env                # Environment variables (local)
+├── .env.production     # Production environment variables
+└── vite.config.ts      # Vite configuration
 ```
 
-**Edit a file directly in GitHub**
+## 🔌 API Integration
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application connects to a FastAPI backend with the following endpoints:
 
-**Use GitHub Codespaces**
+- `/api/auth/*` - Authentication (login, register, refresh)
+- `/api/users/*` - User management
+- `/api/market/*` - Market data and indices
+- `/api/trades/*` - Trade management
+- `/api/orders/*` - Order management
+- `/api/strategies/*` - Strategy management
+- `/api/analytics/*` - Analytics and reports
+- `/api/alerts/*` - Alert notifications
+- `/api/logs/*` - System logs
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+API client is located at `src/lib/api.ts`
 
-## What technologies are used for this project?
+## 🔐 Authentication
 
-This project is built with:
+The application uses JWT-based authentication:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Access tokens are stored in `localStorage` as `af_token`
+- User roles are stored as `af_role`
+- Automatic token refresh on 401 responses
+- Automatic redirect to login on unauthorized access
 
-## How can I deploy this project?
+## 🎨 UI Components
 
-Simply open [Lovable](https://lovable.dev/projects/5b561659-2726-4804-adf6-2421f0d8105d) and click on Share -> Publish.
+Built with **shadcn/ui** component library based on Radix UI primitives:
 
-## Can I connect a custom domain to my Lovable project?
+- Fully accessible components
+- Customizable with Tailwind CSS
+- Dark mode support with `next-themes`
+- Responsive design for all screen sizes
 
-Yes, you can!
+## 📊 State Management
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **TanStack Query** (React Query) for server state
+- **React Context** for global UI state
+- **localStorage** for persistent data (auth tokens, user preferences)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🚀 Deployment
+
+### Production Build
+
+```bash
+npm run build
+```
+
+The built files will be in the `dist/` directory.
+
+### Environment Configuration
+
+Ensure `.env.production` is properly configured with production API endpoints before building.
+
+## 🧪 Development
+
+### Code Style
+
+- TypeScript strict mode enabled
+- ESLint for code linting
+- Consistent component structure
+- Custom hooks for reusable logic
+
+### Best Practices
+
+- Component-based architecture
+- Type-safe API calls
+- Error boundary implementation
+- Proper error handling
+- Loading states for async operations
+
+## 📦 Dependencies Management
+
+Major dependencies are kept up to date. Check `package.json` for current versions.
+
+To update dependencies:
+
+```bash
+npm update
+```
+
+## 🐛 Troubleshooting
+
+### Port 8080 already in use
+
+Change the port in `vite.config.ts`:
+
+```typescript
+server: {
+  port: 3000, // or any available port
+}
+```
+
+### API connection issues
+
+- Verify `VITE_API_URL` in `.env` is correct
+- Ensure backend server is running
+- Check network connectivity
+- Restart dev server after `.env` changes
+
+### Build errors
+
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Clear Vite cache: `rm -rf node_modules/.vite`
+
+## 📄 License
+
+This project is private and proprietary.
+
+## 👥 Support
+
+For issues and questions, contact the development team.
+
+---
+
+**Version**: 1.0.0  
+**Last Updated**: November 2025
