@@ -6,6 +6,7 @@ import { ordersApi } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
 import {
   Popover,
   PopoverContent,
@@ -63,9 +64,10 @@ const OrderHistory = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Filter States
-  const [fromDate, setFromDate] = useState<Date | undefined>(
-    new Date(new Date().setDate(new Date().getDate() - 7)) // Default to last 7 days
-  );
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(new Date().setDate(new Date().getDate() - 7)),
+    to: new Date(),
+  });
   const [searchFilters, setSearchFilters] = useState({
     symbol: "",
     order_type: "",
@@ -86,7 +88,7 @@ const OrderHistory = () => {
       exit_reason: "",
       qty: "",
     });
-    setFromDate(undefined);
+    setDateRange(undefined);
   };
 
   useEffect(() => {
@@ -109,9 +111,10 @@ const OrderHistory = () => {
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       // Date Filter
-      if (fromDate) {
+      if (dateRange?.from) {
         const orderDate = new Date(order.timestamp || order.created_at);
-        if (isBefore(orderDate, startOfDay(fromDate))) return false;
+        if (isBefore(orderDate, startOfDay(dateRange.from))) return false;
+        if (dateRange.to && isAfter(orderDate, endOfDay(dateRange.to))) return false;
       }
 
       // Column Filters
@@ -123,7 +126,7 @@ const OrderHistory = () => {
 
       return matchesSymbol && matchesType && matchesStatus && matchesReason && matchesQty;
     });
-  }, [orders, fromDate, searchFilters]);
+  }, [orders, dateRange, searchFilters]);
 
   const totalRealizedPnl = filteredOrders.reduce((sum, order) => {
     // Robust calculation with field fallbacks to handle different API response formats
@@ -189,20 +192,33 @@ const OrderHistory = () => {
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-[240px] justify-start text-left font-normal",
-                      !fromDate && "text-muted-foreground"
+                      "w-[280px] justify-start text-left font-normal",
+                      !dateRange && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {fromDate ? format(fromDate, "PPP") : <span>From Date</span>}
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "LLL dd, y")} -{" "}
+                          {format(dateRange.to, "LLL dd, y")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "LLL dd, y")
+                      )
+                    ) : (
+                      <span>Select Date Range</span>
+                    )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
                   <Calendar
-                    mode="single"
-                    selected={fromDate}
-                    onSelect={setFromDate}
                     initialFocus
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    numberOfMonths={2}
                   />
                 </PopoverContent>
               </Popover>
@@ -249,7 +265,7 @@ const OrderHistory = () => {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent border-border">
-                        <TableHead>
+                        <TableHead className="min-w-[150px]">
                           <div className="space-y-2">
                             <span>Symbol</span>
                             <div className="relative">
@@ -263,7 +279,7 @@ const OrderHistory = () => {
                             </div>
                           </div>
                         </TableHead>
-                        <TableHead>
+                        <TableHead className="min-w-[100px]">
                           <div className="space-y-2">
                             <span>Type</span>
                             <div className="relative">
@@ -276,7 +292,7 @@ const OrderHistory = () => {
                             </div>
                           </div>
                         </TableHead>
-                        <TableHead>
+                        <TableHead className="min-w-[80px]">
                           <div className="space-y-2">
                             <span>Qty</span>
                             <div className="relative">
@@ -289,11 +305,11 @@ const OrderHistory = () => {
                             </div>
                           </div>
                         </TableHead>
-                        <TableHead>Entry Price</TableHead>
-                        <TableHead>Exit Price</TableHead>
-                        <TableHead>P&L (Pts)</TableHead>
-                        <TableHead>P&L (Total)</TableHead>
-                        <TableHead>
+                        <TableHead className="min-w-[100px]">Entry Price</TableHead>
+                        <TableHead className="min-w-[100px]">Exit Price</TableHead>
+                        <TableHead className="min-w-[100px]">P&L (Pts)</TableHead>
+                        <TableHead className="min-w-[120px]">P&L (Total)</TableHead>
+                        <TableHead className="min-w-[120px]">
                           <div className="space-y-2">
                             <span>Status</span>
                             <div className="relative">
@@ -306,7 +322,7 @@ const OrderHistory = () => {
                             </div>
                           </div>
                         </TableHead>
-                        <TableHead>
+                        <TableHead className="min-w-[150px]">
                           <div className="space-y-2">
                             <span>Exit Reason</span>
                             <div className="relative">
@@ -320,8 +336,8 @@ const OrderHistory = () => {
                             </div>
                           </div>
                         </TableHead>
-                        <TableHead>Entry Time</TableHead>
-                        <TableHead>Exit Time</TableHead>
+                        <TableHead className="min-w-[140px]">Entry Time</TableHead>
+                        <TableHead className="min-w-[140px]">Exit Time</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
