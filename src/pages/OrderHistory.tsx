@@ -73,9 +73,10 @@ const OrderHistory = () => {
     if (order.exit_price && order.status === "EXECUTED") {
       // For SELL orders: P&L = (Entry Price - Exit Price) * Qty
       // For BUY orders: P&L = (Exit Price - Entry Price) * Qty
-      const pnl = order.order_type === "SELL" 
-        ? (order.avg_price - order.exit_price) * order.qty
-        : (order.exit_price - order.avg_price) * order.qty;
+      const pnl =
+        order.order_type === "SELL"
+          ? (order.avg_price - order.exit_price) * order.qty
+          : (order.exit_price - order.avg_price) * order.qty;
       return sum + pnl;
     }
     return sum;
@@ -88,17 +89,46 @@ const OrderHistory = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold">Order History</h2>
-            <p className="text-muted-foreground mt-1">Complete history of your executed orders</p>
+            <p className="text-muted-foreground mt-1">
+              Complete history of your executed orders
+            </p>
           </div>
           <div className="flex items-center gap-3">
-            <Card className="bg-gradient-to-br from-card to-secondary border-border/50">
-              <CardContent className="p-4">
-                <div className="text-sm text-muted-foreground">Total Realized P&L</div>
-                <div className={`text-2xl font-bold ${totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                  {totalPnl >= 0 ? '+' : ''}₹{totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <Card
+              className={`bg-card/50 backdrop-blur-sm border-2 ${
+                totalPnl >= 0 ? "border-profit/50" : "border-loss/50"
+              }`}
+            >
+              <CardContent className="p-4 min-w-[180px]">
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Total Realized P&L
                 </div>
-                <div className={`text-sm ${totalPnl >= 0 ? 'text-profit' : 'text-loss'}`}>
-                  {totalPnl >= 0 ? 'Profit' : 'Loss'}
+                <div
+                  className={`text-2xl font-bold mt-1 ${
+                    totalPnl >= 0 ? "text-profit" : "text-loss"
+                  }`}
+                >
+                  {totalPnl >= 0 ? "+" : ""}₹
+                  {totalPnl.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <div
+                    className={`h-2 w-2 rounded-full ${
+                      totalPnl >= 0
+                        ? "bg-profit animate-pulse"
+                        : "bg-loss animate-pulse"
+                    }`}
+                  />
+                  <span
+                    className={`text-xs font-semibold ${
+                      totalPnl >= 0 ? "text-profit" : "text-loss"
+                    }`}
+                  >
+                    {totalPnl >= 0 ? "PROFIT" : "LOSS"}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -140,9 +170,10 @@ const OrderHistory = () => {
                         <TableHead>Underlying</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Qty</TableHead>
-                        <TableHead>Entry Price</TableHead>
+                         <TableHead>Entry Price</TableHead>
                         <TableHead>Exit Price</TableHead>
-                        <TableHead>P&L</TableHead>
+                        <TableHead>P&L (Pts)</TableHead>
+                        <TableHead>P&L (Total)</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Exchange</TableHead>
                         <TableHead>Timestamp</TableHead>
@@ -151,57 +182,98 @@ const OrderHistory = () => {
                     <TableBody>
                       {orders.map((order) => {
                         // Calculate P&L for each order
-                        const calculatedPnl = order.exit_price && order.status === "EXECUTED"
-                          ? order.order_type === "SELL"
-                            ? (order.avg_price - order.exit_price) * order.qty
-                            : (order.exit_price - order.avg_price) * order.qty
-                          : 0;
-                        
+                        const calculatedPnl =
+                          order.exit_price && order.status === "EXECUTED"
+                            ? order.order_type === "SELL"
+                              ? (order.avg_price - order.exit_price) * order.qty
+                              : (order.exit_price - order.avg_price) * order.qty
+                            : 0;
+
                         return (
-                        <TableRow key={order.id} className="border-border hover:bg-muted/50">
-                          <TableCell className="font-mono text-xs">{order.order_id}</TableCell>
-                          <TableCell className="font-medium">{order.symbol}</TableCell>
-                          <TableCell className="text-sm">{order.underlying}</TableCell>
-                          <TableCell>
-                            <Badge variant={order.order_type === "BUY" ? "default" : "secondary"}>
-                              {order.order_type}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{order.qty}</TableCell>
-                          <TableCell>₹{order.avg_price.toFixed(2)}</TableCell>
+                          <TableRow
+                            key={order.id}
+                            className="border-border hover:bg-muted/50"
+                          >
+                            <TableCell className="font-mono text-xs">
+                              {order.order_id}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {order.symbol}
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {order.underlying}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  order.order_type === "BUY"
+                                    ? "default"
+                                    : "secondary"
+                                }
+                              >
+                                {order.order_type}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{order.qty}</TableCell>
+                             <TableCell>₹{order.avg_price.toFixed(2)}</TableCell>
                           <TableCell>₹{order.exit_price ? order.exit_price.toFixed(2) : "-"}</TableCell>
+                          <TableCell className={calculatedPnl >= 0 ? 'text-profit' : 'text-loss'}>
+                            {order.exit_price ? (
+                              `${(order.exit_price - order.avg_price) >= 0 ? '+' : ''}${(order.exit_price - order.avg_price).toFixed(2)}`
+                            ) : '-'}
+                          </TableCell>
                           <TableCell className={calculatedPnl >= 0 ? 'text-profit font-medium' : 'text-loss font-medium'}>
                             {calculatedPnl !== 0 ? (
                               `${calculatedPnl >= 0 ? '+' : ''}₹${calculatedPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             ) : '-'}
                           </TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={
-                                order.status === "EXECUTED" ? "bg-profit/10 text-profit border-profit/20" :
-                                order.status === "CANCELLED" ? "bg-loss/10 text-loss border-loss/20" :
-                                order.status === "REJECTED" ? "bg-loss/10 text-loss border-loss/20" :
-                                order.status === "PENDING" || order.status === "PLACED" ? "bg-warning/10 text-warning border-warning/20" :
-                                "bg-muted text-muted-foreground"
-                              }
-                            >
-                              {order.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm">{order.exchange}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {(() => {
-                              const date = new Date(order.timestamp);
-                              const day = String(date.getDate()).padStart(2, '0');
-                              const month = String(date.getMonth() + 1).padStart(2, '0');
-                              const year = date.getFullYear();
-                              const hours = String(date.getHours()).padStart(2, '0');
-                              const minutes = String(date.getMinutes()).padStart(2, '0');
-                              const seconds = String(date.getSeconds()).padStart(2, '0');
-                              return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-                            })()}
-                          </TableCell>
-                        </TableRow>
+
+                            <TableCell>
+                              <Badge
+                                className={
+                                  order.status === "EXECUTED"
+                                    ? "bg-profit/10 text-profit border-profit/20"
+                                    : order.status === "CANCELLED"
+                                    ? "bg-loss/10 text-loss border-loss/20"
+                                    : order.status === "REJECTED"
+                                    ? "bg-loss/10 text-loss border-loss/20"
+                                    : order.status === "PENDING" ||
+                                      order.status === "PLACED"
+                                    ? "bg-warning/10 text-warning border-warning/20"
+                                    : "bg-muted text-muted-foreground"
+                                }
+                              >
+                                {order.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {order.exchange}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {(() => {
+                                const date = new Date(order.timestamp);
+                                const day = String(date.getDate()).padStart(
+                                  2,
+                                  "0"
+                                );
+                                const month = String(
+                                  date.getMonth() + 1
+                                ).padStart(2, "0");
+                                const year = date.getFullYear();
+                                const hours = String(date.getHours()).padStart(
+                                  2,
+                                  "0"
+                                );
+                                const minutes = String(
+                                  date.getMinutes()
+                                ).padStart(2, "0");
+                                const seconds = String(
+                                  date.getSeconds()
+                                ).padStart(2, "0");
+                                return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                              })()}
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
                     </TableBody>
