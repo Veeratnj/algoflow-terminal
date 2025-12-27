@@ -72,7 +72,6 @@ const OrderHistory = () => {
     symbol: "",
     order_type: "",
     status: "",
-    exit_reason: "",
     qty: "",
   });
 
@@ -85,7 +84,6 @@ const OrderHistory = () => {
       symbol: "",
       order_type: "",
       status: "",
-      exit_reason: "",
       qty: "",
     });
     setDateRange(undefined);
@@ -121,10 +119,9 @@ const OrderHistory = () => {
       const matchesSymbol = order.symbol.toLowerCase().includes(searchFilters.symbol.toLowerCase());
       const matchesType = order.order_type.toLowerCase().includes(searchFilters.order_type.toLowerCase());
       const matchesStatus = order.status.toLowerCase().includes(searchFilters.status.toLowerCase());
-      const matchesReason = (order.exit_reason || "").toLowerCase().includes(searchFilters.exit_reason.toLowerCase());
       const matchesQty = searchFilters.qty === "" || order.qty.toString().includes(searchFilters.qty);
 
-      return matchesSymbol && matchesType && matchesStatus && matchesReason && matchesQty;
+      return matchesSymbol && matchesType && matchesStatus && matchesQty;
     });
   }, [orders, dateRange, searchFilters]);
 
@@ -322,20 +319,6 @@ const OrderHistory = () => {
                             </div>
                           </div>
                         </TableHead>
-                        <TableHead className="min-w-[150px]">
-                          <div className="space-y-2">
-                            <span>Exit Reason</span>
-                            <div className="relative">
-                              <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground text-opacity-50" />
-                              <Input
-                                placeholder="Search..."
-                                className="h-7 pl-7 text-[10px]"
-                                value={searchFilters.exit_reason}
-                                onChange={(e) => handleFilterChange("exit_reason", e.target.value)}
-                              />
-                            </div>
-                          </div>
-                        </TableHead>
                         <TableHead className="min-w-[140px]">Entry Time</TableHead>
                         <TableHead className="min-w-[140px]">Exit Time</TableHead>
                       </TableRow>
@@ -400,9 +383,6 @@ const OrderHistory = () => {
                               >
                                 {order.status}
                               </Badge>
-                            </TableCell>
-                            <TableCell className="text-sm font-medium italic text-muted-foreground">
-                              {order.exit_reason || "-"}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {(() => {
