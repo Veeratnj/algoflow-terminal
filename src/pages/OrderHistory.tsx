@@ -42,6 +42,8 @@ interface Order {
   timestamp: string;
   placed_at: string;
   executed_at: string | null;
+  entry_time: string | null;
+  exit_reason: string | null;
   updated_at: string;
   created_at: string;
 }
@@ -159,18 +161,17 @@ const OrderHistory = () => {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent border-border">
-                        <TableHead>Order ID</TableHead>
-                        <TableHead>Symbol</TableHead>
-                        <TableHead>Underlying</TableHead>
+                         <TableHead>Symbol</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Qty</TableHead>
-                         <TableHead>Entry Price</TableHead>
+                        <TableHead>Entry Price</TableHead>
                         <TableHead>Exit Price</TableHead>
                         <TableHead>P&L (Pts)</TableHead>
                         <TableHead>P&L (Total)</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Exchange</TableHead>
-                        <TableHead>Timestamp</TableHead>
+                        <TableHead>Exit Reason</TableHead>
+                        <TableHead>Entry Time</TableHead>
+                        <TableHead>Exit Time</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -183,19 +184,13 @@ const OrderHistory = () => {
                         const pts = hasExit ? (exitPrice - entryPrice) : 0;
                         const calculatedPnl = pts * order.qty;
 
-                        return (
+                         return (
                           <TableRow
                             key={order.id}
                             className="border-border hover:bg-muted/50"
                           >
-                            <TableCell className="font-mono text-xs">
-                              {order.order_id}
-                            </TableCell>
                             <TableCell className="font-medium">
                               {order.symbol}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {order.underlying}
                             </TableCell>
                             <TableCell>
                               <Badge
@@ -209,18 +204,18 @@ const OrderHistory = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>{order.qty}</TableCell>
-                             <TableCell>₹{entryPrice.toFixed(2)}</TableCell>
-                          <TableCell>₹{hasExit ? exitPrice.toFixed(2) : "-"}</TableCell>
-                          <TableCell className={calculatedPnl >= 0 ? 'text-profit' : 'text-loss'}>
-                            {hasExit ? (
-                              `${pts >= 0 ? '+' : ''}${pts.toFixed(2)}`
-                            ) : '-'}
-                          </TableCell>
-                          <TableCell className={calculatedPnl >= 0 ? 'text-profit font-medium' : 'text-loss font-medium'}>
-                            {calculatedPnl !== 0 ? (
-                              `${calculatedPnl >= 0 ? '+' : ''}₹${calculatedPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            ) : '-'}
-                          </TableCell>
+                            <TableCell>₹{entryPrice.toFixed(2)}</TableCell>
+                            <TableCell>₹{hasExit ? exitPrice.toFixed(2) : "-"}</TableCell>
+                            <TableCell className={calculatedPnl >= 0 ? 'text-profit' : 'text-loss'}>
+                              {hasExit ? (
+                                `${pts >= 0 ? '+' : ''}${pts.toFixed(2)}`
+                              ) : '-'}
+                            </TableCell>
+                            <TableCell className={calculatedPnl >= 0 ? 'text-profit font-medium' : 'text-loss font-medium'}>
+                              {calculatedPnl !== 0 ? (
+                                `${calculatedPnl >= 0 ? '+' : ''}₹${calculatedPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              ) : '-'}
+                            </TableCell>
 
                             <TableCell>
                               <Badge
@@ -240,31 +235,33 @@ const OrderHistory = () => {
                                 {order.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-sm">
-                              {order.exchange}
+                            <TableCell className="text-sm font-medium italic text-muted-foreground">
+                              {order.exit_reason || "-"}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
                               {(() => {
-                                const date = new Date(order.timestamp);
-                                const day = String(date.getDate()).padStart(
-                                  2,
-                                  "0"
-                                );
-                                const month = String(
-                                  date.getMonth() + 1
-                                ).padStart(2, "0");
+                                const entryTime = order.entry_time || order.placed_at || order.timestamp || order.created_at;
+                                if (!entryTime) return "-";
+                                const date = new Date(entryTime);
+                                const day = String(date.getDate()).padStart(2, "0");
+                                const month = String(date.getMonth() + 1).padStart(2, "0");
                                 const year = date.getFullYear();
-                                const hours = String(date.getHours()).padStart(
-                                  2,
-                                  "0"
-                                );
-                                const minutes = String(
-                                  date.getMinutes()
-                                ).padStart(2, "0");
-                                const seconds = String(
-                                  date.getSeconds()
-                                ).padStart(2, "0");
-                                return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+                                const hours = String(date.getHours()).padStart(2, "0");
+                                const minutes = String(date.getMinutes()).padStart(2, "0");
+                                return `${day}/${month}/${year} ${hours}:${minutes}`;
+                              })()}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {(() => {
+                                const exitTime = order.executed_at || order.updated_at;
+                                if (!exitTime || !hasExit) return "-";
+                                const date = new Date(exitTime);
+                                const day = String(date.getDate()).padStart(2, "0");
+                                const month = String(date.getMonth() + 1).padStart(2, "0");
+                                const year = date.getFullYear();
+                                const hours = String(date.getHours()).padStart(2, "0");
+                                const minutes = String(date.getMinutes()).padStart(2, "0");
+                                return `${day}/${month}/${year} ${hours}:${minutes}`;
                               })()}
                             </TableCell>
                           </TableRow>
