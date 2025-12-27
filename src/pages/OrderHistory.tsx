@@ -1,10 +1,19 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Download, Search, Calendar as CalendarIcon, X } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { ordersApi } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { format, isAfter, isBefore, startOfDay, endOfDay } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ordersApi } from "@/lib/api";
 import {
   Table,
   TableBody,
@@ -53,6 +62,33 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter States
+  const [fromDate, setFromDate] = useState<Date | undefined>(
+    new Date(new Date().setDate(new Date().getDate() - 7)) // Default to last 7 days
+  );
+  const [searchFilters, setSearchFilters] = useState({
+    symbol: "",
+    order_type: "",
+    status: "",
+    exit_reason: "",
+    qty: "",
+  });
+
+  const handleFilterChange = (column: string, value: string) => {
+    setSearchFilters((prev) => ({ ...prev, [column]: value }));
+  };
+
+  const clearFilters = () => {
+    setSearchFilters({
+      symbol: "",
+      order_type: "",
+      status: "",
+      exit_reason: "",
+      qty: "",
+    });
+    setFromDate(undefined);
+  };
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -70,7 +106,26 @@ const OrderHistory = () => {
     fetchOrders();
   }, []);
 
-  const totalRealizedPnl = orders.reduce((sum, order) => {
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      // Date Filter
+      if (fromDate) {
+        const orderDate = new Date(order.timestamp || order.created_at);
+        if (isBefore(orderDate, startOfDay(fromDate))) return false;
+      }
+
+      // Column Filters
+      const matchesSymbol = order.symbol.toLowerCase().includes(searchFilters.symbol.toLowerCase());
+      const matchesType = order.order_type.toLowerCase().includes(searchFilters.order_type.toLowerCase());
+      const matchesStatus = order.status.toLowerCase().includes(searchFilters.status.toLowerCase());
+      const matchesReason = (order.exit_reason || "").toLowerCase().includes(searchFilters.exit_reason.toLowerCase());
+      const matchesQty = searchFilters.qty === "" || order.qty.toString().includes(searchFilters.qty);
+
+      return matchesSymbol && matchesType && matchesStatus && matchesReason && matchesQty;
+    });
+  }, [orders, fromDate, searchFilters]);
+
+  const totalRealizedPnl = filteredOrders.reduce((sum, order) => {
     // Robust calculation with field fallbacks to handle different API response formats
     const exit = order.exit_price ?? (order as any).executed_price ?? (order as any).executedPrice ?? 0;
     const entry = order.avg_price ?? order.price ?? 0;
@@ -128,6 +183,39 @@ const OrderHistory = () => {
                 </div>
               </CardContent>
             </Card>
+            <div className="flex items-center gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !fromDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {fromDate ? format(fromDate, "PPP") : <span>From Date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="single"
+                    selected={fromDate}
+                    onSelect={setFromDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={clearFilters}
+                className="hover:text-loss"
+                title="Clear Filters"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
               Export CSV
@@ -161,21 +249,83 @@ const OrderHistory = () => {
                   <Table>
                     <TableHeader>
                       <TableRow className="hover:bg-transparent border-border">
-                         <TableHead>Symbol</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Qty</TableHead>
+                        <TableHead>
+                          <div className="space-y-2">
+                            <span>Symbol</span>
+                            <div className="relative">
+                              <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+                              <Input
+                                placeholder="Search..."
+                                className="h-7 pl-7 text-[10px]"
+                                value={searchFilters.symbol}
+                                onChange={(e) => handleFilterChange("symbol", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </TableHead>
+                        <TableHead>
+                          <div className="space-y-2">
+                            <span>Type</span>
+                            <div className="relative">
+                              <Input
+                                placeholder="Filter..."
+                                className="h-7 text-[10px]"
+                                value={searchFilters.order_type}
+                                onChange={(e) => handleFilterChange("order_type", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </TableHead>
+                        <TableHead>
+                          <div className="space-y-2">
+                            <span>Qty</span>
+                            <div className="relative">
+                              <Input
+                                placeholder="#"
+                                className="h-7 text-[10px]"
+                                value={searchFilters.qty}
+                                onChange={(e) => handleFilterChange("qty", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </TableHead>
                         <TableHead>Entry Price</TableHead>
                         <TableHead>Exit Price</TableHead>
                         <TableHead>P&L (Pts)</TableHead>
                         <TableHead>P&L (Total)</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Exit Reason</TableHead>
+                        <TableHead>
+                          <div className="space-y-2">
+                            <span>Status</span>
+                            <div className="relative">
+                              <Input
+                                placeholder="Filter..."
+                                className="h-7 text-[10px]"
+                                value={searchFilters.status}
+                                onChange={(e) => handleFilterChange("status", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </TableHead>
+                        <TableHead>
+                          <div className="space-y-2">
+                            <span>Exit Reason</span>
+                            <div className="relative">
+                              <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground text-opacity-50" />
+                              <Input
+                                placeholder="Search..."
+                                className="h-7 pl-7 text-[10px]"
+                                value={searchFilters.exit_reason}
+                                onChange={(e) => handleFilterChange("exit_reason", e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </TableHead>
                         <TableHead>Entry Time</TableHead>
                         <TableHead>Exit Time</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orders.map((order) => {
+                      {filteredOrders.map((order) => {
                         // Robust calculation with field fallbacks
                         const entryPrice = order.avg_price ?? order.price ?? 0;
                         const exitPrice = order.exit_price ?? (order as any).executed_price ?? (order as any).executedPrice ?? 0;
