@@ -68,16 +68,11 @@ const OrderHistory = () => {
     fetchOrders();
   }, []);
 
-  const totalPnl = orders.reduce((sum, order) => {
-    // Calculate P&L based on order type and exit price
+  const totalRealizedPnl = orders.reduce((sum, order) => {
     if (order.exit_price && order.status === "EXECUTED") {
-      // For SELL orders: P&L = (Entry Price - Exit Price) * Qty
-      // For BUY orders: P&L = (Exit Price - Entry Price) * Qty
-      const pnl =
-        order.order_type === "SELL"
-          ? (order.avg_price - order.exit_price) * order.qty
-          : (order.exit_price - order.avg_price) * order.qty;
-      return sum + pnl;
+      // P&L = (Exit Price - Entry Price) * Qty
+      const pnlValue = (order.exit_price - order.avg_price) * order.qty;
+      return sum + pnlValue;
     }
     return sum;
   }, 0);
@@ -95,39 +90,39 @@ const OrderHistory = () => {
           </div>
           <div className="flex items-center gap-3">
             <Card
-              className={`bg-card/50 backdrop-blur-sm border-2 ${
-                totalPnl >= 0 ? "border-profit/50" : "border-loss/50"
+              className={`bg-card/40 backdrop-blur-md shadow-lg border-2 transition-all duration-300 ${
+                totalRealizedPnl >= 0 ? "border-profit/40 shadow-profit/5" : "border-loss/40 shadow-loss/5"
               }`}
             >
-              <CardContent className="p-4 min-w-[180px]">
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <CardContent className="p-4 min-w-[200px]">
+                <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
                   Total Realized P&L
                 </div>
                 <div
-                  className={`text-2xl font-bold mt-1 ${
-                    totalPnl >= 0 ? "text-profit" : "text-loss"
+                  className={`text-3xl font-black mt-1 tracking-tight ${
+                    totalRealizedPnl >= 0 ? "text-profit" : "text-loss"
                   }`}
                 >
-                  {totalPnl >= 0 ? "+" : ""}₹
-                  {totalPnl.toLocaleString(undefined, {
+                  {totalRealizedPnl >= 0 ? "+" : ""}₹
+                  {totalRealizedPnl.toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </div>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-2">
                   <div
-                    className={`h-2 w-2 rounded-full ${
-                      totalPnl >= 0
-                        ? "bg-profit animate-pulse"
-                        : "bg-loss animate-pulse"
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      totalRealizedPnl >= 0
+                        ? "bg-profit shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse"
+                        : "bg-loss shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse"
                     }`}
                   />
                   <span
-                    className={`text-xs font-semibold ${
-                      totalPnl >= 0 ? "text-profit" : "text-loss"
+                    className={`text-xs font-bold tracking-widest ${
+                      totalRealizedPnl >= 0 ? "text-profit" : "text-loss"
                     }`}
                   >
-                    {totalPnl >= 0 ? "PROFIT" : "LOSS"}
+                    {totalRealizedPnl >= 0 ? "PROFIT" : "LOSS"}
                   </span>
                 </div>
               </CardContent>
@@ -181,13 +176,9 @@ const OrderHistory = () => {
                     </TableHeader>
                     <TableBody>
                       {orders.map((order) => {
-                        // Calculate P&L for each order
-                        const calculatedPnl =
-                          order.exit_price && order.status === "EXECUTED"
-                            ? order.order_type === "SELL"
-                              ? (order.avg_price - order.exit_price) * order.qty
-                              : (order.exit_price - order.avg_price) * order.qty
-                            : 0;
+                        // P&L calculation: (Exit - Entry) * Qty as requested
+                        const pts = order.exit_price ? (order.exit_price - order.avg_price) : 0;
+                        const calculatedPnl = pts * order.qty;
 
                         return (
                           <TableRow
