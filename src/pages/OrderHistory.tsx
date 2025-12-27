@@ -69,12 +69,11 @@ const OrderHistory = () => {
   }, []);
 
   const totalRealizedPnl = orders.reduce((sum, order) => {
-    if (order.exit_price && order.status === "EXECUTED") {
-      // P&L = (Exit Price - Entry Price) * Qty
-      const pnlValue = (order.exit_price - order.avg_price) * order.qty;
-      return sum + pnlValue;
-    }
-    return sum;
+    // Robust calculation with field fallbacks to handle different API response formats
+    const exit = order.exit_price ?? (order as any).executed_price ?? (order as any).executedPrice ?? 0;
+    const entry = order.avg_price ?? order.price ?? 0;
+    const pnl = (exit - entry) * order.qty;
+    return sum + pnl;
   }, 0);
 
   return (
@@ -176,8 +175,12 @@ const OrderHistory = () => {
                     </TableHeader>
                     <TableBody>
                       {orders.map((order) => {
-                        // P&L calculation: (Exit - Entry) * Qty as requested
-                        const pts = order.exit_price ? (order.exit_price - order.avg_price) : 0;
+                        // Robust calculation with field fallbacks
+                        const entryPrice = order.avg_price ?? order.price ?? 0;
+                        const exitPrice = order.exit_price ?? (order as any).executed_price ?? (order as any).executedPrice ?? 0;
+                        const hasExit = order.exit_price !== null && order.exit_price !== undefined || (order as any).executedPrice !== undefined || (order as any).executed_price !== undefined;
+                        
+                        const pts = hasExit ? (exitPrice - entryPrice) : 0;
                         const calculatedPnl = pts * order.qty;
 
                         return (
@@ -206,11 +209,11 @@ const OrderHistory = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>{order.qty}</TableCell>
-                             <TableCell>₹{order.avg_price.toFixed(2)}</TableCell>
-                          <TableCell>₹{order.exit_price ? order.exit_price.toFixed(2) : "-"}</TableCell>
+                             <TableCell>₹{entryPrice.toFixed(2)}</TableCell>
+                          <TableCell>₹{hasExit ? exitPrice.toFixed(2) : "-"}</TableCell>
                           <TableCell className={calculatedPnl >= 0 ? 'text-profit' : 'text-loss'}>
-                            {order.exit_price ? (
-                              `${(order.exit_price - order.avg_price) >= 0 ? '+' : ''}${(order.exit_price - order.avg_price).toFixed(2)}`
+                            {hasExit ? (
+                              `${pts >= 0 ? '+' : ''}${pts.toFixed(2)}`
                             ) : '-'}
                           </TableCell>
                           <TableCell className={calculatedPnl >= 0 ? 'text-profit font-medium' : 'text-loss font-medium'}>
@@ -222,7 +225,7 @@ const OrderHistory = () => {
                             <TableCell>
                               <Badge
                                 className={
-                                  order.status === "EXECUTED"
+                                  order.status === "EXECUTED" || order.status === "COMPLETED" || order.status === "CLOSED"
                                     ? "bg-profit/10 text-profit border-profit/20"
                                     : order.status === "CANCELLED"
                                     ? "bg-loss/10 text-loss border-loss/20"
