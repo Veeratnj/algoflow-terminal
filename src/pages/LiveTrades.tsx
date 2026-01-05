@@ -27,11 +27,17 @@ const LiveTrades = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isFirstLoad = true;
     const fetchTrades = async () => {
       try {
-        setLoading(true);
+        if (isFirstLoad) {
+          setLoading(true);
+        }
         const data = await tradesApi.getAll();
         setTrades(data);
+        if (isFirstLoad) {
+          isFirstLoad = false;
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load trades");
         console.error("Trades fetch error:", err);
@@ -41,6 +47,9 @@ const LiveTrades = () => {
     };
 
     fetchTrades();
+    const interval = setInterval(fetchTrades, 1500);
+
+    return () => clearInterval(interval);
   }, []);
 
   const totalPnl = trades.reduce((sum, trade) => sum + trade.pnl, 0);
