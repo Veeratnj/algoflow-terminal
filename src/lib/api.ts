@@ -283,7 +283,7 @@ export const marketApi = {
 
 // Trades
 export const tradesApi = {
-  getAll: () => apiClient.get("/api/trades"),
+  getAll: () => apiClient.get("/api/trades/today"),
   getById: (id: string | number) => apiClient.get(`/api/trades/${id}`),
   create: (data: any) => apiClient.post("/api/trades", data),
   update: (id: string | number, data: any) => apiClient.put(`/api/trades/${id}`, data),
